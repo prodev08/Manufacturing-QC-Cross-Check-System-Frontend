@@ -178,7 +178,7 @@ const SessionDetails: React.FC = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <button
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/history")}
             className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
           >
             <ArrowLeft className="h-5 w-5" />
