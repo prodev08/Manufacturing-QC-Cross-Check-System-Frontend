@@ -1,7 +1,13 @@
-import React from "react";
-import { CheckCircle, AlertTriangle, XCircle, Info } from "lucide-react";
+import React, { useState } from "react";
+import {
+  CheckCircle,
+  AlertTriangle,
+  XCircle,
+  Info,
+  ChevronDown,
+  ChevronRight,
+} from "lucide-react";
 import { ValidationResult } from "@/types/api";
-import { formatDate } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
 interface ValidationResultCardProps {
@@ -13,45 +19,50 @@ const ValidationResultCard: React.FC<ValidationResultCardProps> = ({
   result,
   showDetails = true,
 }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+
   const getStatusConfig = (status: string) => {
     switch (status) {
       case "PASS":
         return {
           icon: CheckCircle,
-          bgColor: "bg-success-50",
-          borderColor: "border-success-200",
-          iconColor: "text-success-600",
+          bgColor: "bg-success-100",
           textColor: "text-success-800",
+          label: "Pass",
         };
       case "WARNING":
         return {
           icon: AlertTriangle,
-          bgColor: "bg-warning-50",
-          borderColor: "border-warning-200",
-          iconColor: "text-warning-600",
+          bgColor: "bg-warning-100",
           textColor: "text-warning-800",
+          label: "Warning",
         };
       case "FAIL":
         return {
           icon: XCircle,
-          bgColor: "bg-danger-50",
-          borderColor: "border-danger-200",
-          iconColor: "text-danger-600",
+          bgColor: "bg-danger-100",
           textColor: "text-danger-800",
+          label: "Fail",
+        };
+      case "INFO":
+        return {
+          icon: Info,
+          bgColor: "bg-blue-100",
+          textColor: "text-blue-800",
+          label: "Info",
         };
       default:
         return {
           icon: Info,
-          bgColor: "bg-gray-50",
-          borderColor: "border-gray-200",
-          iconColor: "text-gray-600",
+          bgColor: "bg-gray-100",
           textColor: "text-gray-800",
+          label: status,
         };
     }
   };
 
   const config = getStatusConfig(result.status);
-  const Icon = config.icon;
+  const StatusIcon = config.icon;
 
   const getCheckTypeLabel = (checkType: string): string => {
     switch (checkType) {
@@ -74,72 +85,110 @@ const ValidationResultCard: React.FC<ValidationResultCardProps> = ({
     }
   };
 
-  return (
-    <div
-      className={cn(
-        "border rounded-lg p-4 transition-all duration-200",
-        config.bgColor,
-        config.borderColor
-      )}
-    >
-      <div className="flex items-start space-x-3">
-        <Icon className={cn("h-5 w-5 mt-0.5", config.iconColor)} />
+  const hasDetails =
+    result.expected_value || result.actual_value || result.details;
 
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between mb-2">
-            <h4 className={cn("text-sm font-medium", config.textColor)}>
-              {getCheckTypeLabel(result.check_type)}
-            </h4>
-            <span className="text-xs text-gray-500">
-              {formatDate(result.created_at)}
-            </span>
+  return (
+    <div className="border border-gray-200 bg-white overflow-hidden">
+      {/* Accordion Header */}
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="w-full text-left hover:bg-gray-50 transition-colors duration-200"
+      >
+        <div className="grid grid-cols-12 items-center p-4 gap-4">
+          {/* Expand/Collapse Icon */}
+          <div className="col-span-1 flex justify-center">
+            {hasDetails ? (
+              isExpanded ? (
+                <ChevronDown className="h-4 w-4 text-gray-500" />
+              ) : (
+                <ChevronRight className="h-4 w-4 text-gray-500" />
+              )
+            ) : null}
           </div>
 
-          <p className="text-sm text-gray-700 mb-2">{result.description}</p>
+          {/* Check Type */}
+          <div className="col-span-3">
+            <div className="text-sm font-medium text-gray-900">
+              {getCheckTypeLabel(result.check_type)}
+            </div>
+          </div>
 
-          {showDetails && (
-            <div className="space-y-2">
-              {(result.expected_value || result.actual_value) && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                  {result.expected_value && (
-                    <div className="bg-white/60 rounded px-2 py-1 border">
-                      <span className="font-medium text-gray-600">
-                        Expected:
-                      </span>
-                      <br />
-                      <span className="text-gray-800">
-                        {result.expected_value}
-                      </span>
-                    </div>
-                  )}
-                  {result.actual_value && (
-                    <div className="bg-white/60 rounded px-2 py-1 border">
-                      <span className="font-medium text-gray-600">Actual:</span>
-                      <br />
-                      <span className="text-gray-800">
-                        {result.actual_value}
-                      </span>
-                    </div>
-                  )}
-                </div>
+          {/* Status */}
+          <div className="col-span-2">
+            <div
+              className={cn(
+                "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
+                config.bgColor,
+                config.textColor
               )}
+            >
+              <StatusIcon className="h-3 w-3 mr-1" />
+              {config.label}
+            </div>
+          </div>
 
-              {result.details && (
-                <div className="text-xs text-gray-600 bg-white/60 rounded px-2 py-1 border">
-                  <span className="font-medium">Details:</span> {result.details}
-                </div>
-              )}
+          {/* Message */}
+          <div className="col-span-6">
+            <div className="text-sm text-gray-700">{result.description}</div>
+          </div>
+        </div>
+      </button>
 
-              {result.source_files && result.source_files.length > 0 && (
-                <div className="text-xs text-gray-600">
-                  <span className="font-medium">Sources:</span>{" "}
-                  {result.source_files.join(", ")}
+      {/* Accordion Content */}
+      {isExpanded && hasDetails && (
+        <div className="px-4 pb-4 border-t border-gray-100">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            {/* Expected Value */}
+            {result.expected_value && (
+              <div>
+                <div className="text-sm font-medium text-gray-500 mb-2">
+                  Expected Value
                 </div>
-              )}
+                <div className="bg-gray-50 rounded-lg p-3 text-sm text-gray-900 font-mono">
+                  {result.expected_value}
+                </div>
+              </div>
+            )}
+
+            {/* Actual Value */}
+            {result.actual_value && (
+              <div>
+                <div className="text-sm font-medium text-gray-500 mb-2">
+                  Actual Value
+                </div>
+                <div className="bg-gray-50 rounded-lg p-3 text-sm text-gray-900 font-mono">
+                  {result.actual_value}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Additional Details */}
+          {result.details && (
+            <div className="mt-4">
+              <div className="text-sm font-medium text-gray-500 mb-2">
+                Details
+              </div>
+              <div className="bg-blue-50 rounded-lg p-3 text-sm text-blue-900">
+                {result.details}
+              </div>
+            </div>
+          )}
+
+          {/* Source Files */}
+          {result.source_files && result.source_files.length > 0 && (
+            <div className="mt-4">
+              <div className="text-sm font-medium text-gray-500 mb-2">
+                Source Files
+              </div>
+              <div className="text-xs text-gray-600">
+                {result.source_files.join(", ")}
+              </div>
             </div>
           )}
         </div>
-      </div>
+      )}
     </div>
   );
 };

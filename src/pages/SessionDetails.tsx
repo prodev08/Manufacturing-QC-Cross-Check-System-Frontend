@@ -4,8 +4,6 @@ import {
   ArrowLeft,
   Play,
   RotateCcw,
-  Download,
-  Trash2,
   RefreshCw,
   Upload,
   Plus,
@@ -398,7 +396,18 @@ const SessionDetails: React.FC = () => {
             )}
           </div>
 
-          <div className="space-y-4">
+          <div>
+            {/* Table Header */}
+            <div className="bg-gray-50 border border-gray-200">
+              <div className="grid grid-cols-12 items-center p-4 gap-4 text-xs font-medium text-gray-500 uppercase tracking-wide">
+                <div className="col-span-1"></div>
+                <div className="col-span-3">Check Type</div>
+                <div className="col-span-2">Status</div>
+                <div className="col-span-6">Message</div>
+              </div>
+            </div>
+
+            {/* Validation Results */}
             {validationResults
               .sort((a, b) => {
                 // Sort by status priority: FAIL, WARNING, PASS
