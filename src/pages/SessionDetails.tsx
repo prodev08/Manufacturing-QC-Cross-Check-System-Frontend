@@ -7,6 +7,8 @@ import {
   Download,
   Trash2,
   RefreshCw,
+  Upload,
+  Plus,
 } from "lucide-react";
 import { useSessionStore } from "@/stores/sessionStore";
 import { formatDate } from "@/lib/utils";
@@ -14,11 +16,14 @@ import StatusBadge from "@/components/StatusBadge";
 import ProgressBar from "@/components/ProgressBar";
 import FileStatusCard from "@/components/FileStatusCard";
 import ValidationResultCard from "@/components/ValidationResultCard";
+import FileUpload from "@/components/FileUpload";
 
 const SessionDetails: React.FC = () => {
   const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
   const [isPolling, setIsPolling] = useState(false);
+  const [showUpload, setShowUpload] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
   const {
     currentSession,
@@ -27,6 +32,7 @@ const SessionDetails: React.FC = () => {
     workflowStatus,
     isLoading,
     isAnalyzing,
+    isUploadingFiles,
     loadSession,
     loadValidationResults,
     loadWorkflowStatus,
@@ -34,6 +40,7 @@ const SessionDetails: React.FC = () => {
     retryAnalysis,
     deleteFile,
     clearSession,
+    uploadFiles,
   } = useSessionStore();
 
   useEffect(() => {
@@ -94,6 +101,32 @@ const SessionDetails: React.FC = () => {
       loadSession(sessionId);
       loadValidationResults(sessionId);
       loadWorkflowStatus(sessionId);
+    }
+  };
+
+  const handleFilesSelected = (files: File[]) => {
+    setSelectedFiles((prev) => [...prev, ...files]);
+  };
+
+  const handleRemoveFile = (index: number) => {
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleUploadFiles = async () => {
+    if (!sessionId || selectedFiles.length === 0) return;
+
+    const success = await uploadFiles(sessionId, selectedFiles);
+    if (success) {
+      setSelectedFiles([]);
+      setShowUpload(false);
+      handleRefresh(); // Refresh the session data
+    }
+  };
+
+  const handleToggleUpload = () => {
+    setShowUpload(!showUpload);
+    if (showUpload) {
+      setSelectedFiles([]);
     }
   };
 
@@ -260,23 +293,80 @@ const SessionDetails: React.FC = () => {
           <h2 className="text-lg font-semibold text-gray-900">
             Uploaded Files ({files.length})
           </h2>
-          {workflowStatus?.processing_summary && (
-            <div className="text-sm text-gray-500">
-              Completed:{" "}
-              {workflowStatus.processing_summary.by_status.COMPLETED || 0} |
-              Processing:{" "}
-              {workflowStatus.processing_summary.by_status.PROCESSING || 0} |
-              Failed: {workflowStatus.processing_summary.by_status.FAILED || 0}
-            </div>
-          )}
+          <div className="flex items-center space-x-3">
+            {workflowStatus?.processing_summary && (
+              <div className="text-sm text-gray-500">
+                Completed:{" "}
+                {workflowStatus.processing_summary.by_status.COMPLETED || 0} |
+                Processing:{" "}
+                {workflowStatus.processing_summary.by_status.PROCESSING || 0} |
+                Failed:{" "}
+                {workflowStatus.processing_summary.by_status.FAILED || 0}
+              </div>
+            )}
+            <button
+              onClick={handleToggleUpload}
+              className="btn-primary btn-sm inline-flex items-center space-x-2"
+              disabled={isUploadingFiles}
+            >
+              <Plus className="h-4 w-4" />
+              <span>{showUpload ? "Cancel Upload" : "Add Files"}</span>
+            </button>
+          </div>
         </div>
+
+        {/* Upload Section (when toggled) */}
+        {showUpload && (
+          <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <h3 className="text-md font-medium text-gray-900 mb-3">
+              Upload Additional Files
+            </h3>
+            <FileUpload
+              onFilesSelected={handleFilesSelected}
+              selectedFiles={selectedFiles}
+              onRemoveFile={handleRemoveFile}
+              isUploading={isUploadingFiles}
+            />
+
+            {selectedFiles.length > 0 && (
+              <div className="flex justify-between items-center pt-4 border-t border-gray-300 mt-4">
+                <div className="text-sm text-gray-600">
+                  {selectedFiles.length} file(s) ready to upload
+                </div>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={handleToggleUpload}
+                    className="btn-secondary btn-sm"
+                    disabled={isUploadingFiles}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleUploadFiles}
+                    disabled={isUploadingFiles}
+                    className="btn-primary btn-sm inline-flex items-center space-x-2"
+                  >
+                    {isUploadingFiles ? (
+                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                    ) : (
+                      <Upload className="h-3 w-3" />
+                    )}
+                    <span>
+                      {isUploadingFiles ? "Uploading..." : "Upload Files"}
+                    </span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {files.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             <p>No files uploaded yet</p>
-            <button onClick={() => navigate("/")} className="btn-primary mt-4">
-              Upload Files
-            </button>
+            <p className="text-sm mt-1">
+              Use the "Add Files" button above to upload files to this session
+            </p>
           </div>
         ) : (
           <div className="space-y-4">

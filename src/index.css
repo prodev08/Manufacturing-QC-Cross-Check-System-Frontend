@@ -34,6 +34,14 @@
     @apply btn bg-danger-600 text-white hover:bg-danger-700 px-4 py-2;
   }
   
+  .btn-sm {
+    @apply px-2 py-1 text-xs;
+  }
+  
+  .btn-lg {
+    @apply px-6 py-3 text-lg;
+  }
+  
   .card {
     @apply bg-white rounded-lg border border-gray-200 shadow-sm;
   }

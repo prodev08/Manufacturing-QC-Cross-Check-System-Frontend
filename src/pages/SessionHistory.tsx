@@ -68,6 +68,45 @@ const SessionHistory: React.FC = () => {
         </div>
       </div>
 
+      {/* Summary Stats */}
+      {sessions.length > 0 && (
+        <div className="card p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            Summary Statistics
+          </h3>
+
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-gray-900">
+                {sessions.length}
+              </div>
+              <div className="text-sm text-gray-600">Total Sessions</div>
+            </div>
+
+            <div className="text-center">
+              <div className="text-2xl font-bold text-success-600">
+                {sessions.filter((s) => s.status === "COMPLETED").length}
+              </div>
+              <div className="text-sm text-gray-600">Completed</div>
+            </div>
+
+            <div className="text-center">
+              <div className="text-2xl font-bold text-warning-600">
+                {sessions.filter((s) => s.status === "PROCESSING").length}
+              </div>
+              <div className="text-sm text-gray-600">Processing</div>
+            </div>
+
+            <div className="text-center">
+              <div className="text-2xl font-bold text-danger-600">
+                {sessions.filter((s) => s.status === "FAILED").length}
+              </div>
+              <div className="text-sm text-gray-600">Failed</div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Sessions List */}
       {sessions.length === 0 ? (
         <div className="card p-12 text-center">
@@ -166,45 +205,6 @@ const SessionHistory: React.FC = () => {
                 </div>
               </div>
             ))}
-        </div>
-      )}
-
-      {/* Summary Stats */}
-      {sessions.length > 0 && (
-        <div className="card p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Summary Statistics
-          </h3>
-
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900">
-                {sessions.length}
-              </div>
-              <div className="text-sm text-gray-600">Total Sessions</div>
-            </div>
-
-            <div className="text-center">
-              <div className="text-2xl font-bold text-success-600">
-                {sessions.filter((s) => s.status === "COMPLETED").length}
-              </div>
-              <div className="text-sm text-gray-600">Completed</div>
-            </div>
-
-            <div className="text-center">
-              <div className="text-2xl font-bold text-warning-600">
-                {sessions.filter((s) => s.status === "PROCESSING").length}
-              </div>
-              <div className="text-sm text-gray-600">Processing</div>
-            </div>
-
-            <div className="text-center">
-              <div className="text-2xl font-bold text-danger-600">
-                {sessions.filter((s) => s.status === "FAILED").length}
-              </div>
-              <div className="text-sm text-gray-600">Failed</div>
-            </div>
-          </div>
         </div>
       )}
     </div>

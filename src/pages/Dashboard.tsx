@@ -1,15 +1,28 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Upload, ArrowRight } from "lucide-react";
+import { Plus, Upload, ArrowRight, Eye, RefreshCw } from "lucide-react";
 import { useSessionStore } from "@/stores/sessionStore";
+import { formatDate } from "@/lib/utils";
 import FileUpload from "@/components/FileUpload";
+import StatusBadge from "@/components/StatusBadge";
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { createSession, uploadFiles, isLoading, isUploadingFiles } =
-    useSessionStore();
+  const {
+    createSession,
+    uploadFiles,
+    isLoading,
+    isUploadingFiles,
+    sessions,
+    isLoadingSessions,
+    loadSessions,
+  } = useSessionStore();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadSessions();
+  }, []);
 
   const handleCreateSession = async () => {
     const session = await createSession();
@@ -34,6 +47,25 @@ const Dashboard: React.FC = () => {
       navigate(`/session/${currentSessionId}`);
     }
   };
+
+  const handleViewSession = (sessionId: string) => {
+    navigate(`/session/${sessionId}`);
+  };
+
+  const handleRefresh = () => {
+    loadSessions();
+  };
+
+  // Get recent sessions for summary
+  const recentSessions = sessions.slice(0, 5);
+  const totalSessions = sessions.length;
+  const completedSessions = sessions.filter(
+    (s) => s.status === "COMPLETED"
+  ).length;
+  const processingSessions = sessions.filter(
+    (s) => s.status === "PROCESSING"
+  ).length;
+  const failedSessions = sessions.filter((s) => s.status === "FAILED").length;
 
   return (
     <div className="space-y-8">
@@ -164,6 +196,123 @@ const Dashboard: React.FC = () => {
                 Bill of materials with job numbers, parts, and revisions
               </p>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Dashboard Stats and Recent Sessions */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Quick Stats */}
+        <div className="lg:col-span-1">
+          <div className="card p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              Session Overview
+            </h2>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Total Sessions</span>
+                <span className="text-xl font-bold text-gray-900">
+                  {totalSessions}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Completed</span>
+                <span className="text-xl font-bold text-success-600">
+                  {completedSessions}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Processing</span>
+                <span className="text-xl font-bold text-warning-600">
+                  {processingSessions}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Failed</span>
+                <span className="text-xl font-bold text-danger-600">
+                  {failedSessions}
+                </span>
+              </div>
+            </div>
+            <div className="mt-6 pt-4 border-t border-gray-200">
+              <button
+                onClick={() => navigate("/history")}
+                className="w-full btn-secondary"
+              >
+                View All Sessions
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Recent Sessions */}
+        <div className="lg:col-span-2">
+          <div className="card p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-900">
+                Recent Sessions
+              </h2>
+              <button
+                onClick={handleRefresh}
+                className="btn-secondary btn-sm inline-flex items-center space-x-1"
+                disabled={isLoadingSessions}
+              >
+                <RefreshCw className="h-3 w-3" />
+                <span>Refresh</span>
+              </button>
+            </div>
+
+            {isLoadingSessions ? (
+              <div className="flex justify-center items-center py-8">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div>
+              </div>
+            ) : recentSessions.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <p>No sessions yet</p>
+                <p className="text-sm mt-1">Create your first session below</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {recentSessions.map((session) => (
+                  <div
+                    key={session.id}
+                    className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center space-x-3">
+                        <StatusBadge status={session.status} size="sm" />
+                        {session.overall_result && (
+                          <StatusBadge
+                            status={session.overall_result}
+                            size="sm"
+                          />
+                        )}
+                      </div>
+                      <div className="mt-1 text-sm text-gray-600">
+                        <span className="font-mono">
+                          {session.id.slice(0, 8)}...
+                        </span>
+                        <span className="mx-2">•</span>
+                        <span>{formatDate(session.created_at)}</span>
+                        {session.files && (
+                          <>
+                            <span className="mx-2">•</span>
+                            <span>{session.files.length} files</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleViewSession(session.id)}
+                      className="btn-primary btn-sm inline-flex items-center space-x-1"
+                    >
+                      <Eye className="h-3 w-3" />
+                      <span>View</span>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
