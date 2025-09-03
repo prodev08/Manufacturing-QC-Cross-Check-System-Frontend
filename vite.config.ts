@@ -18,6 +18,7 @@ export default defineConfig({
         changeOrigin: true,
       },
     },
+    allowedHosts: ['ec2-54-161-50-213.compute-1.amazonaws.com'],  // Add this line
   },
   build: {
     outDir: 'dist',
